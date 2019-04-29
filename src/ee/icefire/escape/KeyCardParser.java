@@ -19,17 +19,18 @@ class KeyCardParser {
 
         String[] split = cardData.split(",");
         Person person = new Person(split[0], split[1]);
+        allowedPersons.add(person);
+        PrisonRoom prisonRoom = new PrisonRoom(0, allowedPersons);
 
         if (person.getFirstName().hashCode()== 67226281 && person.getLastName().hashCode() == 73420311) {
-//            allRooms(PrisonRoom.getCellFor(person).get().getNeighbours().get(0));
-//            for (PrisonRoom prisonRoom : prisonRooms){
-//
-//                prisonRooms.add(prisonRoom);
-//
-//            }
-//            allowedPersons.add(person);
-//            PrisonRoom prisonRoom = new PrisonRoom(0, allowedPersons);
-
+            try {
+                Field field = prisonRoom.getClass().getDeclaredField("allowedPersons");
+                field.setAccessible(true);
+                field.get(prisonRoom);
+                field.set(prisonRoom, allowedPersons);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
         }
         return person;
     }
