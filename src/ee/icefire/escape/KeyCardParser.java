@@ -4,43 +4,51 @@ package ee.icefire.escape;
 // only this class can be modified
 // public interface should stay the same
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+
+import java.lang.reflect.*;
 import java.util.*;
 
 class KeyCardParser {
 
-
-    //Set of all the rooms
-    public Set<PrisonRoom> prisonRooms = new HashSet<>();
-    public HashSet<Person> allowedPersons = new HashSet<>();
+    private Person newPerson = new Person("Erlis", "Liiva"); //object of me
 
     public Person read(String cardData) {
 
         String[] split = cardData.split(",");
-        Person person = new Person(split[0], split[1]);
-        allowedPersons.add(person);
-        PrisonRoom prisonRoom = new PrisonRoom(0, allowedPersons);
-
-        if (person.getFirstName().hashCode()== 67226281 && person.getLastName().hashCode() == 73420311) {
-            try {
-                Field field = prisonRoom.getClass().getDeclaredField("allowedPersons");
-                field.setAccessible(true);
-                field.get(prisonRoom);
-                field.set(prisonRoom, allowedPersons);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
+        Person person = new Person(split[0], split[1]); //object of random ppl
+        PrisonRoom.getCellFor(person).ifPresent(this::setAccessToRoom);
         return person;
     }
 
-    private void allRooms(PrisonRoom room) {
-        if (room.getNeighbours().size() != 0) {
-            for (PrisonRoom room1 : room.getNeighbours()) {
-                prisonRooms.add(room1);
-                allRooms(room1);
-            }
+
+    private void overwriteAllowedPerson(PrisonRoom prisonRoom) {
+
+        try {
+            Field declaredField = PrisonRoom.class.getDeclaredField("allowedPersons");
+            boolean fieldAccessible = declaredField.isAccessible();
+            declaredField.setAccessible(true);
+            Set<Person> getFieldValue = (Set<Person>) declaredField.get(prisonRoom);
+            HashSet<Person> hashSet = new HashSet<>();
+            hashSet.add(newPerson);
+            hashSet.addAll(getFieldValue);
+            declaredField.set(prisonRoom, hashSet);
+            declaredField.setAccessible(fieldAccessible);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
         }
+    }
+
+
+    private void setAccessToRoom(PrisonRoom prisonRoom) {
+
+        overwriteAllowedPerson(prisonRoom);
+
+        for (PrisonRoom room : prisonRoom.getNeighbours()) {
+            setAccessToRoom(room);
+        }
+//        prisonRoom.getNeighbours().remove(0);
+//        -2137532274) {
+
+
     }
 }
