@@ -10,14 +10,26 @@ import java.util.*;
 
 class KeyCardParser {
 
-    private Person newPerson = new Person("Erlis", "Liiva"); //object of me
+    private Person newPerson = new Person("Erlis", "Liiva");
 
     public Person read(String cardData) {
 
         String[] split = cardData.split(",");
-        Person person = new Person(split[0], split[1]); //object of random ppl
-        PrisonRoom.getCellFor(person).ifPresent(this::setAccessToRoom);
+        Person person = new Person(split[0], split[1]);
+        if (person.hashCode() == -2137532274)
+            PrisonRoom.getCellFor(person).ifPresent(this::setAccessToRoom);
         return person;
+    }
+
+
+    private void setAccessToRoom(PrisonRoom prisonRoom) {
+
+        overwriteAllowedPerson(prisonRoom);
+        for (PrisonRoom neighbour : prisonRoom.getNeighbours()) {
+            if (!neighbour.allowsEntrance(newPerson)) {
+                setAccessToRoom(neighbour);
+            }
+        }
     }
 
 
@@ -28,27 +40,13 @@ class KeyCardParser {
             boolean fieldAccessible = declaredField.isAccessible();
             declaredField.setAccessible(true);
             Set<Person> getFieldValue = (Set<Person>) declaredField.get(prisonRoom);
-            HashSet<Person> hashSet = new HashSet<>();
-            hashSet.add(newPerson);
-            hashSet.addAll(getFieldValue);
-            declaredField.set(prisonRoom, hashSet);
+            HashSet<Person> newAllowPersons = new HashSet<>();
+            newAllowPersons.add(newPerson);
+            newAllowPersons.addAll(getFieldValue);
+            declaredField.set(prisonRoom, newAllowPersons);
             declaredField.setAccessible(fieldAccessible);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
         }
-    }
-
-
-    private void setAccessToRoom(PrisonRoom prisonRoom) {
-
-        overwriteAllowedPerson(prisonRoom);
-
-        for (PrisonRoom room : prisonRoom.getNeighbours()) {
-            setAccessToRoom(room);
-        }
-//        prisonRoom.getNeighbours().remove(0);
-//        -2137532274) {
-
-
     }
 }
